@@ -114,7 +114,10 @@ def auto_fix_common_mismatches(
     scalefactors: Dict[str, float],
     target_img_key: str = "hires",
 ) -> Tuple[pd.DataFrame, Dict[str, str]]:
-    """Attempt to fix swapped or mis-scaled coordinates."""
+    """
+    Attempt to fix swapped coordinates. Avoid scaling to prevent double-application;
+    scaling from fullres to hires/lowres is handled by Scanpy using scalefactors.
+    """
     report = {}
     fixed = df.copy()
     h, w = image_shape
@@ -125,22 +128,5 @@ def auto_fix_common_mismatches(
     if x.min() >= h and y.min() >= w:
         fixed["pxl_col_in_fullres"], fixed["pxl_row_in_fullres"] = y, x
         report["swap_xy"] = "applied"
-        x, y = y, x
-
-    # Scaling heuristics
-    hires_scale = scalefactors.get("tissue_hires_scalef")
-    lowres_scale = scalefactors.get("tissue_lowres_scalef")
-    if target_img_key == "hires" and hires_scale is not None:
-        if x.max() < w * hires_scale * 0.7 and y.max() < h * hires_scale * 0.7:
-            scale = 1.0 / hires_scale
-            fixed["pxl_col_in_fullres"] = (x * scale).astype(int)
-            fixed["pxl_row_in_fullres"] = (y * scale).astype(int)
-            report["scaled"] = f"scaled up by {scale:.3f} to match hires"
-    if target_img_key == "lowres" and lowres_scale is not None:
-        if x.max() > w * 1.5 or y.max() > h * 1.5:
-            scale = lowres_scale
-            fixed["pxl_col_in_fullres"] = (x * scale).astype(int)
-            fixed["pxl_row_in_fullres"] = (y * scale).astype(int)
-            report["scaled"] = f"scaled down by {scale:.3f} to match lowres"
 
     return fixed, report

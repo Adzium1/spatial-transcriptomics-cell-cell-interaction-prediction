@@ -28,7 +28,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--h5ad", type=Path, required=True, help="Processed AnnData file")
     p.add_argument("--graph", type=Path, required=False, help="Graph .pt file for overlay")
     p.add_argument("--padding", type=float, default=200.0, help="Padding in pixels for cropping")
-    p.add_argument("--img_key", type=str, default=None, help="Image key to use (hires or lowres). Defaults to hires if available.")
+    p.add_argument(
+        "--img_key",
+        type=str,
+        default=None,
+        help="Image key to use (hires, lowres, or none). Defaults to hires if available.",
+    )
     p.add_argument("--top_edges", type=int, default=2000, help="Number of edges to overlay if graph provided")
     p.add_argument(
         "--crop_mode",
@@ -87,7 +92,10 @@ def main() -> None:
     args = parse_args()
     adata = sc.read_h5ad(args.h5ad)
     lib = list(adata.uns["spatial"].keys())[0]
-    img_key = args.img_key or ("hires" if "hires" in adata.uns["spatial"][lib]["images"] else "lowres")
+    if args.img_key and args.img_key.lower() == "none":
+        img_key = None
+    else:
+        img_key = args.img_key or ("hires" if "hires" in adata.uns["spatial"][lib]["images"] else "lowres")
 
     # Ensure QC metrics for counts plot
     if "total_counts" not in adata.obs.columns:
@@ -107,7 +115,7 @@ def main() -> None:
         if crop is None:
             logger.warning("Image-based crop failed; falling back to spot-based crop.")
             crop = _crop_from_coords(coords[mask], args.padding)
-    spot_size = _spot_size_from_scalefactors(adata, img_key)
+    spot_size = _spot_size_from_scalefactors(adata, img_key) if img_key else 1.0
 
     # Plot in_tissue categorical
     plt.figure(figsize=(6, 6))
@@ -117,7 +125,7 @@ def main() -> None:
         img_key=img_key,
         color="in_tissue",
         size=1.2,
-        alpha_img=1.0,
+        alpha_img=1.0 if img_key else 0.0,
         crop_coord=crop,
         spot_size=spot_size,
         show=False,
@@ -135,7 +143,7 @@ def main() -> None:
         img_key=img_key,
         color="total_counts",
         size=1.2,
-        alpha_img=1.0,
+        alpha_img=1.0 if img_key else 0.0,
         crop_coord=crop,
         spot_size=spot_size,
         show=False,
@@ -166,7 +174,7 @@ def main() -> None:
             img_key=img_key,
             color=None,
             size=1.0,
-            alpha_img=1.0,
+            alpha_img=1.0 if img_key else 0.0,
             crop_coord=crop,
             spot_size=spot_size,
             show=False,
