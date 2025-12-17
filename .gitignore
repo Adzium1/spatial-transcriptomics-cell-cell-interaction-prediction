@@ -1,0 +1,2 @@
+# Ignore large raw dataset artifacts
+data/external/Visium_HD_Tiny_3prime_Dataset_outs/
