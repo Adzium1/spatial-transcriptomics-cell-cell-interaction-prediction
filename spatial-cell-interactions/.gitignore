@@ -1,0 +1,17 @@
+.venv/
+.env
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+*.DS_Store
+*.egg-info/
+build/
+dist/
+results/
+data/processed/
+data/external/
+checkpoints/
+*.ipynb_checkpoints

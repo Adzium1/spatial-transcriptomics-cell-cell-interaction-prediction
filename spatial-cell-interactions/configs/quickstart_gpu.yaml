@@ -1,0 +1,23 @@
+seed: 42
+preprocessing:
+  min_pct: 0.01
+  n_hvg: 2000
+  flavor: seurat_v3
+graph:
+  k: 8
+  rbf_dim: 16
+training:
+  hidden_dim: 128
+  out_dim: 64
+  num_layers: 3
+  heads: 4
+  lr: 0.0007
+  weight_decay: 0.0005
+  epochs: 100
+  val_frac: 0.15
+  neg_ratio: 1.0
+  patience: 20
+  grad_clip: 5.0
+  use_amp: true
+visualization:
+  top_k_edges: 600
