@@ -170,42 +170,75 @@ def build_celltype_labels(
     df = pd.DataFrame({"obs_name": adata.obs_names.values, "cell_type": cell_type})
     for ct, vals in scores.items():
         df[f"score_{ct}"] = vals
+    # Soft aggregate scores for immune/epithelial convenience
+    immune_keys = [k for k in scores if k in {"T_cells", "B_cells", "Myeloid"}]
+    df["immune_score"] = np.stack([scores[k] for k in immune_keys], axis=1).mean(axis=1) if immune_keys else 0.0
+    df["epithelial_score"] = scores.get("Epithelial", np.zeros(len(cell_type), dtype=np.float32))
     return df
 
 
 def build_celltype_edge_labels(
     edge_index: torch.Tensor,
     cell_types: np.ndarray,
+    immune_scores: np.ndarray,
+    epi_scores: np.ndarray,
     immune: List[str],
     epithelial: List[str],
     seed: int,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    bin_threshold: float = 0.5,
+    neg_ratio: int = 1,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     src = edge_index[0].numpy()
     dst = edge_index[1].numpy()
     ct_src = cell_types[src]
     ct_dst = cell_types[dst]
 
-    # immune-epi binary
-    immune_set = set(immune)
-    epi_set = set(epithelial)
-    valid = (ct_src != "Unknown") & (ct_dst != "Unknown")
-    is_pos = (
-        (np.isin(ct_src, list(immune_set)) & np.isin(ct_dst, list(epi_set)))
-        | (np.isin(ct_dst, list(immune_set)) & np.isin(ct_src, list(epi_set)))
-    )
-    y_ie = np.where(valid, is_pos.astype(int), -1)
-    mask_ie = y_ie >= 0
-    df_ie = pd.DataFrame(
+    # Soft strength
+    strength = immune_scores[src] * epi_scores[dst] + immune_scores[dst] * epi_scores[src]
+    df_strength = pd.DataFrame(
         {
-            "edge_id": np.arange(len(src))[mask_ie],
-            "src": src[mask_ie],
-            "dst": dst[mask_ie],
-            "y_immune_epi": y_ie[mask_ie],
+            "edge_id": np.arange(len(src)),
+            "src": src,
+            "dst": dst,
+            "immune_score_src": immune_scores[src],
+            "epithelial_score_src": epi_scores[src],
+            "immune_score_dst": immune_scores[dst],
+            "epithelial_score_dst": epi_scores[dst],
+            "y_strength": strength,
         }
     )
-    df_ie = _split_stratified(df_ie, "y_immune_epi", seed)
 
-    # multiclass directed pair
+    # Binary with balancing
+    pos_mask = (
+        ((immune_scores[src] > bin_threshold) & (epi_scores[dst] > bin_threshold))
+        | ((immune_scores[dst] > bin_threshold) & (epi_scores[src] > bin_threshold))
+    )
+    neg_mask = (
+        ((immune_scores[src] <= bin_threshold) & (epi_scores[dst] <= bin_threshold))
+        & ((immune_scores[dst] <= bin_threshold) & (epi_scores[src] <= bin_threshold))
+    )
+    pos_idx = np.where(pos_mask)[0]
+    neg_idx = np.where(neg_mask)[0]
+    if len(neg_idx) > 0:
+        neg_sample = np.random.choice(neg_idx, size=min(len(neg_idx), neg_ratio * len(pos_idx) if len(pos_idx) > 0 else len(neg_idx)), replace=False)
+    else:
+        neg_sample = np.array([], dtype=int)
+    keep = np.concatenate([pos_idx, neg_sample])
+    y_ie = np.zeros(len(keep), dtype=int)
+    y_ie[: len(pos_idx)] = 1
+    df_ie = pd.DataFrame(
+        {
+            "edge_id": keep,
+            "src": src[keep],
+            "dst": dst[keep],
+            "y_immune_epi": y_ie,
+        }
+    )
+    if len(df_ie) > 0:
+        df_ie = _split_stratified(df_ie, "y_immune_epi", seed)
+
+    # Multiclass directed pair (kept for compatibility)
+    valid = (ct_src != "Unknown") & (ct_dst != "Unknown")
     pair = np.where(valid, ct_src + "__" + ct_dst, "Unknown")
     df_pair = pd.DataFrame(
         {
@@ -223,7 +256,7 @@ def build_celltype_edge_labels(
         df_pair = _split_stratified(df_pair, "type_pair", seed)
     except Exception:
         df_pair["split"] = "train"
-    return df_ie, df_pair
+    return df_ie, df_pair, df_strength
 
 
 def main():
@@ -266,12 +299,16 @@ def main():
 
     immune = ["T_cells", "B_cells", "Myeloid"]
     epithelial = ["Epithelial"]
-    celltype_edges_bin, celltype_edges_pair = build_celltype_edge_labels(
+    celltype_edges_bin, celltype_edges_pair, celltype_strength = build_celltype_edge_labels(
         edge_index=edge_index,
         cell_types=celltype_df["cell_type"].values,
+        immune_scores=celltype_df["immune_score"].values,
+        epi_scores=celltype_df["epithelial_score"].values,
         immune=immune,
         epithelial=epithelial,
         seed=args.seed,
+        bin_threshold=0.5,
+        neg_ratio=1,
     )
 
     out_dir = args.out_dir
@@ -280,6 +317,7 @@ def main():
     _save_df(celltype_df, out_dir / "celltype_node_labels.parquet")
     _save_df(celltype_edges_bin, out_dir / "celltype_edge_labels_binary.parquet")
     _save_df(celltype_edges_pair, out_dir / "celltype_edge_labels_multiclass.parquet")
+    _save_df(celltype_strength, out_dir / "celltype_edge_strength.parquet")
     print(f"Wrote labels to {out_dir}")
 
 

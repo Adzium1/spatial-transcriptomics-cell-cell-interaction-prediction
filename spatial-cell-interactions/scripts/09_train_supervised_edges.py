@@ -13,6 +13,7 @@ import pandas as pd
 import scanpy as sc
 import torch
 import torch.nn as nn
+from scipy.stats import spearmanr
 from sklearn.decomposition import PCA
 from sklearn.metrics import (
     average_precision_score,
@@ -227,6 +228,85 @@ def _train_task(
     return preds, final_metrics, probs
 
 
+def _train_regression(
+    feats: np.ndarray,
+    targets: np.ndarray,
+    splits: np.ndarray,
+    hidden_dim: int,
+    lr: float,
+    epochs: int,
+    patience: int,
+    device: torch.device,
+    topk: int = 500,
+) -> Tuple[np.ndarray, Dict[str, float], np.ndarray]:
+    x = torch.tensor(feats, dtype=torch.float32, device=device)
+    y = torch.tensor(targets, dtype=torch.float32, device=device)
+    mask_train = torch.tensor(splits == "train", device=device)
+    mask_val = torch.tensor(splits == "val", device=device)
+    mask_test = torch.tensor(splits == "test", device=device)
+
+    model = MLP(feats.shape[1], hidden_dim, 1).to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    loss_fn = nn.SmoothL1Loss()
+    best_metric = -np.inf
+    best_state = None
+    wait = 0
+
+    def eval_corr(preds_np, y_np):
+        try:
+            corr, _ = spearmanr(preds_np, y_np)
+        except Exception:
+            corr = np.nan
+        return corr
+
+    def topk_overlap(preds_np, y_np, k):
+        k = min(k, len(preds_np))
+        true_top = set(np.argsort(y_np)[-k:])
+        pred_top = set(np.argsort(preds_np)[-k:])
+        return len(true_top & pred_top) / float(k) if k > 0 else np.nan
+
+    for epoch in range(epochs):
+        model.train()
+        pred = model(x).view(-1)
+        loss = loss_fn(pred[mask_train], y[mask_train])
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+        model.eval()
+        with torch.no_grad():
+            pred_all = model(x).view(-1)
+        pred_val = pred_all[mask_val].cpu().numpy()
+        y_val = y[mask_val].cpu().numpy()
+        corr_val = eval_corr(pred_val, y_val)
+        if corr_val > best_metric:
+            best_metric = corr_val
+            best_state = model.state_dict()
+            wait = 0
+        else:
+            wait += 1
+        if wait >= patience:
+            break
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+    model.eval()
+    with torch.no_grad():
+        pred_all = model(x).view(-1)
+    preds_np = pred_all.cpu().numpy()
+    y_np = y.cpu().numpy()
+
+    metrics = {}
+    for split_name, mask in [("val", mask_val), ("test", mask_test)]:
+        if mask.sum().item() > 0:
+            p = preds_np[mask.cpu().numpy()]
+            t = y_np[mask.cpu().numpy()]
+            metrics[f"immune_epi_reg_{split_name}_spearman"] = float(eval_corr(p, t))
+            metrics[f"immune_epi_reg_{split_name}_mae"] = float(np.mean(np.abs(p - t)))
+            metrics[f"immune_epi_reg_{split_name}_topk_overlap"] = float(topk_overlap(p, t, topk))
+    return preds_np, metrics, preds_np
+
+
 def main():
     ap = argparse.ArgumentParser(description="Supervised edge classifiers for LR and cell-type tasks.")
     ap.add_argument("--h5ad", type=Path, required=True)
@@ -241,6 +321,7 @@ def main():
     ap.add_argument("--hidden_dim", type=int, default=128)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--device", type=str, default="cpu")
+    ap.add_argument("--reg_topk", type=int, default=500)
     args = ap.parse_args()
 
     _set_seed(args.seed)
@@ -287,13 +368,49 @@ def main():
     # LR binary
     run_binary("lr", args.labels_dir / "lr_edge_labels.parquet", "y_lr", out_dir / "preds_lr.parquet")
 
-    # Immune-epithelial binary
-    run_binary(
-        "immune_epi",
-        args.labels_dir / "celltype_edge_labels_binary.parquet",
-        "y_immune_epi",
-        out_dir / "preds_immune_epi.parquet",
-    )
+    # Immune-epithelial regression
+    reg_path = args.labels_dir / "celltype_edge_strength.parquet"
+    if reg_path.exists():
+        df = _load_labels(reg_path)
+        edge_ids = df["edge_id"].to_numpy()
+        feats = _edge_features(edge_ids, z, edge_index, edge_attr, pos)
+        labels_reg = df["y_strength"].to_numpy().astype(np.float32)
+        # Simple split by edge_id modulo (to avoid strat issues on continuous)
+        splits = np.full(len(labels_reg), "train", dtype=object)
+        splits[(edge_ids % 10) == 0] = "val"
+        splits[(edge_ids % 10) == 1] = "test"
+        preds_reg, m_reg, _ = _train_regression(
+            feats=feats,
+            targets=labels_reg,
+            splits=splits,
+            hidden_dim=args.hidden_dim,
+            lr=args.lr,
+            epochs=args.epochs,
+            patience=args.patience,
+            device=device,
+            topk=args.reg_topk,
+        )
+        metrics.update(m_reg)
+        out = df.copy()
+        out["y_true"] = labels_reg
+        out["y_pred"] = preds_reg
+        out["split"] = splits
+        out.to_parquet(out_dir / "preds_immune_epi_reg.parquet", index=False)
+        print(f"Saved regression preds to {out_dir / 'preds_immune_epi_reg.parquet'}")
+    else:
+        print("Skipping immune-epithelial regression: labels not found.")
+
+    # Immune-epithelial binary (balanced)
+    bin_path = args.labels_dir / "celltype_edge_labels_binary.parquet"
+    if bin_path.exists():
+        run_binary(
+            "immune_epi",
+            bin_path,
+            "y_immune_epi",
+            out_dir / "preds_immune_epi.parquet",
+        )
+    else:
+        print("Skipping immune-epithelial binary: labels not found.")
 
     # Multiclass type_pair
     pair_path = args.labels_dir / "celltype_edge_labels_multiclass.parquet"

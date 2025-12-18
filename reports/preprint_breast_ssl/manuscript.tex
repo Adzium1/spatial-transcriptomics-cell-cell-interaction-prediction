@@ -44,6 +44,16 @@ Fig.~\ref{fig:umap} displays UMAP of the learned embedding with Leiden clusters;
 \subsection{Quantitative performance}
 Edge reconstruction achieved AUROC 0.914 and AP 0.890 at early stop (epoch 19). These metrics reflect structural recovery of spatial adjacency, not biological interaction validation.
 
+\section{Supervised interaction modeling}
+We derive proxy labels from expression/markers: (i) ligand--receptor edges (expression proxy), (ii) immune--epithelial interaction strength (soft scores), (iii) exploratory type-pair labels. Immune--epithelial is treated as regression (strength = immune\_score\_i * epithelial\_score\_j + immune\_score\_j * epithelial\_score\_i). Training uses SSL embeddings when available, with PCA fallback.
+
+Supervised metrics (test split):
+\begin{itemize}
+\item LR (SSL features): AUROC 0.9769809411367852, AP 0.9202200856705721.
+\item Immune--epithelial regression: Spearman 0.8929744092622207, top-k overlap 0.778.
+\end{itemize}
+Binary immune--epithelial and type\_pair are retained for compatibility but are secondary.
+
 \section{Discussion}
 This demo shows that SSL on spatial graphs can learn coherent representations and recover spatial adjacency in Visium/CytAssist data using only pixel coordinates and expression. Graph overlays and clustering remain interpretable without bespoke labels.
 

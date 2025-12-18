@@ -40,13 +40,18 @@ def plot_edges(
     spots_only: bool,
     color: str,
     top_k: int,
+    score_col: str = "y_prob",
 ):
     lib = list(adata.uns["spatial"].keys())[0]
     coords = adata.obsm["spatial"]
     mask = adata.obs["in_tissue"].astype(int).values == 1 if "in_tissue" in adata.obs else np.ones(adata.n_obs, dtype=bool)
     crop = compute_crop(coords, mask)
 
-    edges_sorted = edges.sort_values("y_prob", ascending=False).head(top_k)
+    score_col = score_col if score_col in edges.columns else (edges.columns[-1] if edges.columns.size > 0 else None)
+    if score_col is None:
+        print(f"Skipping plot {title}: no score column available.")
+        return
+    edges_sorted = edges.sort_values(score_col, ascending=False).head(top_k)
     x = coords[:, 0]
     y = coords[:, 1]
 
@@ -123,6 +128,7 @@ def main():
     ap.add_argument("--h5ad", type=Path, required=True)
     ap.add_argument("--preds_lr", type=Path, required=True)
     ap.add_argument("--preds_immune_epi", type=Path, required=True)
+    ap.add_argument("--preds_immune_epi_reg", type=Path, default=None)
     ap.add_argument("--out_dir", type=Path, default=Path("results/figures_supervised"))
     ap.add_argument("--top_k", type=int, default=2000)
     ap.add_argument("--img_key", type=str, default="lowres")
@@ -160,6 +166,28 @@ def main():
     plot_curves(preds_lr, "LR", out_dir / "lr_curves.png")
     plot_curves(preds_ie, "Immune-Epithelial", out_dir / "immune_epi_curves.png")
     plot_lr_scatter(preds_lr, out_dir / "lr_score_vs_prob.png")
+
+    if args.preds_immune_epi_reg and Path(args.preds_immune_epi_reg).exists():
+        preds_reg = load_preds(args.preds_immune_epi_reg)
+        plot_edges(
+            adata=adata,
+            edges=preds_reg.sort_values("y_pred", ascending=False).head(args.top_k),
+            title="Top immune-epithelial (regression)",
+            out_path=out_dir / "immune_epi_reg_edges_topk.png",
+            img_key=args.img_key,
+            spots_only=bool(args.spots_only),
+            color="tab:purple",
+            top_k=args.top_k,
+            score_col="y_pred",
+        )
+        plt.figure(figsize=(5, 4))
+        plt.scatter(preds_reg["y_true"], preds_reg["y_pred"], s=4, alpha=0.4)
+        plt.xlabel("Immune-epi strength (true)")
+        plt.ylabel("Predicted")
+        plt.tight_layout()
+        plt.savefig(out_dir / "immune_epi_reg_scatter.png", dpi=200, bbox_inches="tight")
+        plt.close()
+
     print(f"Saved plots to {out_dir}")
 
 

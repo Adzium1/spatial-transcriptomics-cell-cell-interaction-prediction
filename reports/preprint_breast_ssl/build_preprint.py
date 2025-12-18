@@ -28,6 +28,7 @@ INPUTS = {
     "run_dir": REPO / "results" / "run_breast_ssl",
     "config": REPO / "results" / "run_breast_ssl" / "config_used.yaml",
 }
+SUP_METRICS = REPO / "results" / "run_breast_supervised" / "metrics.json"
 
 FIGURES = [
     ("results/figures/breast_total_counts_hires_cropped.png", "breast_total_counts_hires_cropped.png"),
@@ -93,7 +94,19 @@ def parse_metrics_from_logs(run_dir: Path) -> dict:
     return metrics
 
 
-def render_latex(cfg: dict, metrics: dict) -> str:
+def load_supervised_metrics(path: Path) -> dict:
+    if path.exists():
+        try:
+            import json
+
+            with path.open() as fh:
+                return json.load(fh)
+        except Exception:
+            return {}
+    return {}
+
+
+def render_latex(cfg: dict, metrics: dict, sup_metrics: dict) -> str:
     m = {**KNOWN, **metrics}
     hyper = cfg.get("training", {})
     graph_cfg = cfg.get("graph", {})
@@ -118,6 +131,12 @@ def render_latex(cfg: dict, metrics: dict) -> str:
         + [r"\hline", r"\end{tabular}"]
     )
 
+    sup_table_rows = []
+    if sup_metrics:
+        sup_table_rows.append(
+            ("LR (SSL)", f"AUROC {sup_metrics.get('lr_test_auroc', 'NA'):.3f}, AP {sup_metrics.get('lr_test_ap', 'NA'):.3f}")
+        )
+        # Include PCA baseline if present
     latex = rf"""\documentclass[11pt]{{article}}
 \usepackage[margin=1in]{{geometry}}
 \usepackage{{graphicx}}
@@ -163,6 +182,16 @@ Fig.~\ref{{fig:umap}} displays UMAP of the learned embedding with Leiden cluster
 
 \subsection{{Quantitative performance}}
 Edge reconstruction achieved AUROC {m['val_auroc']:.3f} and AP {m['val_ap']:.3f} at early stop (epoch {m['early_stop_epoch']}). These metrics reflect structural recovery of spatial adjacency, not biological interaction validation.
+
+\section{{Supervised interaction modeling}}
+We derive proxy labels from expression/markers: (i) ligand--receptor edges (expression proxy), (ii) immune--epithelial interaction strength (soft scores), (iii) exploratory type-pair labels. Immune--epithelial is treated as regression (strength = immune\_score\_i * epithelial\_score\_j + immune\_score\_j * epithelial\_score\_i). Training uses SSL embeddings when available, with PCA fallback.
+
+Supervised metrics (test split):
+\begin{{itemize}}
+\item LR (SSL features): AUROC {sup_metrics.get('lr_test_auroc', 'NA')}, AP {sup_metrics.get('lr_test_ap', 'NA')}.
+\item Immune--epithelial regression: Spearman {sup_metrics.get('immune_epi_reg_test_spearman', 'NA')}, top-k overlap {sup_metrics.get('immune_epi_reg_test_topk_overlap', 'NA')}.
+\end{{itemize}}
+Binary immune--epithelial and type\_pair are retained for compatibility but are secondary.
 
 \section{{Discussion}}
 This demo shows that SSL on spatial graphs can learn coherent representations and recover spatial adjacency in Visium/CytAssist data using only pixel coordinates and expression. Graph overlays and clustering remain interpretable without bespoke labels.
@@ -245,7 +274,7 @@ We thank the open-source contributors to Scanpy and PyTorch Geometric. Dataset c
     return latex
 
 
-def render_markdown(metrics: dict) -> str:
+def render_markdown(metrics: dict, sup_metrics: dict) -> str:
     m = {**KNOWN, **metrics}
     md = dedent(
         f"""
@@ -261,6 +290,10 @@ def render_markdown(metrics: dict) -> str:
         - breast_radius_graph_spots_only.png
         - breast_umap_leiden.png
         - breast_spatial_leiden_lowres_cropped.png
+
+        ## Supervised interaction metrics (test)
+        - LR (SSL features): AUROC {sup_metrics.get('lr_test_auroc', 'NA')}, AP {sup_metrics.get('lr_test_ap', 'NA')}
+        - Immune–epithelial regression: Spearman {sup_metrics.get('immune_epi_reg_test_spearman', 'NA')}, top-k overlap {sup_metrics.get('immune_epi_reg_test_topk_overlap', 'NA')}
 
         ## Reproducibility (CPU)
         ```bash
@@ -327,8 +360,9 @@ def main():
     cfg = load_config()
     copy_figures()
     parsed = parse_metrics_from_logs(INPUTS["run_dir"])
-    latex = render_latex(cfg, parsed)
-    markdown = render_markdown(parsed)
+    sup_metrics = load_supervised_metrics(SUP_METRICS)
+    latex = render_latex(cfg, parsed, sup_metrics)
+    markdown = render_markdown(parsed, sup_metrics)
     write_files(latex, markdown)
     build_pdf()
     print("Preprint assets written to", OUT_DIR)

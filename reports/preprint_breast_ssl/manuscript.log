@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.11.27)  18 DEC 2025 13:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.11.27)  18 DEC 2025 15:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -259,105 +259,106 @@ LaTeX Font Info:    External font `cmex10' loaded for size
  [1
 
 {c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2]
-Overfull \hbox (858.19185pt too wide) in paragraph at lines 72--72
+Overfull \hbox (858.19185pt too wide) in paragraph at lines 82--82
 []\OT1/cmtt/m/n/10.95 curl -L -o filtered_feature_bc_matrix.h5 https://cf.10xgenomics.com/samples/spatial-exp/2.1.0/CytAssist_FFPE_Protein_Expression_Human_Breast_Cancer/CytAssist_FFPE_Protein_Expression_Human_Breast_Cancer_filtered_feature_bc_matrix.h5[] 
  []
 
 
-Overfull \hbox (685.73122pt too wide) in paragraph at lines 72--72
+Overfull \hbox (685.73122pt too wide) in paragraph at lines 82--82
 []\OT1/cmtt/m/n/10.95 curl -L -o spatial.tar.gz https://cf.10xgenomics.com/samples/spatial-exp/2.1.0/CytAssist_FFPE_Protein_Expression_Human_Breast_Cancer/CytAssist_FFPE_Protein_Expression_Human_Breast_Cancer_spatial.tar.gz[] 
  []
 
 
-Overfull \hbox (1065.1446pt too wide) in paragraph at lines 72--72
+Overfull \hbox (1065.1446pt too wide) in paragraph at lines 82--82
 []\OT1/cmtt/m/n/10.95 python spatial-cell-interactions/scripts/01_prepare_data.py --visium_path data/external/breast_cytassist_ffpe/outs --count_file filtered_feature_bc_matrix.h5 --out_h5ad data/processed/breast_cytassist_ffpe.h5ad --filter_in_tissue 1 --min_spots_frac 0.001 --n_hvg 2000[] 
  []
 
 
-Overfull \hbox (915.67873pt too wide) in paragraph at lines 72--72
+Overfull \hbox (915.67873pt too wide) in paragraph at lines 82--82
 []\OT1/cmtt/m/n/10.95 python spatial-cell-interactions/scripts/02_build_graph.py --h5ad data/processed/breast_cytassist_ffpe.h5ad --out_graph data/processed/breast_cytassist_ffpe_radius_graph.pt --graph_type radius --distance_unit pixel --radius auto --rbf_dim 16[] 
  []
 
 
-Overfull \hbox (789.2076pt too wide) in paragraph at lines 72--72
+Overfull \hbox (789.2076pt too wide) in paragraph at lines 82--82
 []\OT1/cmtt/m/n/10.95 python spatial-cell-interactions/scripts/03_train_ssl.py --graph data/processed/breast_cytassist_ffpe_radius_graph.pt --out_dir results/run_breast_ssl --config spatial-cell-interactions/configs/default.yaml --device cpu[] 
  []
 
-<figures/breast_total_counts_hires_cropped.png, id=107, 328.97304pt x 310.761pt>
+[3]
+<figures/breast_total_counts_hires_cropped.png, id=117, 328.97304pt x 310.761pt>
 File: figures/breast_total_counts_hires_cropped.png Graphic file (type png)
 <use figures/breast_total_counts_hires_cropped.png>
-Package pdftex.def Info: figures/breast_total_counts_hires_cropped.png  used on input line 108.
+Package pdftex.def Info: figures/breast_total_counts_hires_cropped.png  used on input line 118.
 (pdftex.def)             Requested size: 375.80544pt x 355.00146pt.
-[3]
-<figures/breast_in_tissue_lowres_cropped.png, id=114, 325.215pt x 310.761pt>
+ [4]
+<figures/breast_in_tissue_lowres_cropped.png, id=123, 325.215pt x 310.761pt>
 File: figures/breast_in_tissue_lowres_cropped.png Graphic file (type png)
 <use figures/breast_in_tissue_lowres_cropped.png>
-Package pdftex.def Info: figures/breast_in_tissue_lowres_cropped.png  used on input line 115.
+Package pdftex.def Info: figures/breast_in_tissue_lowres_cropped.png  used on input line 125.
 (pdftex.def)             Requested size: 375.80544pt x 359.13159pt.
- [4
+ [5
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.119 
+l.129 
        <./figures/breast_total_counts_hires_cropped.png>]
-<figures/breast_radius_graph_spots_only.png, id=120, 498.663pt x 498.663pt>
+<figures/breast_radius_graph_spots_only.png, id=129, 498.663pt x 498.663pt>
 File: figures/breast_radius_graph_spots_only.png Graphic file (type png)
 <use figures/breast_radius_graph_spots_only.png>
-Package pdftex.def Info: figures/breast_radius_graph_spots_only.png  used on input line 122.
+Package pdftex.def Info: figures/breast_radius_graph_spots_only.png  used on input line 132.
 (pdftex.def)             Requested size: 375.80544pt x 375.80727pt.
- [5
+ [6
 pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.126 
+l.136 
        <./figures/breast_in_tissue_lowres_cropped.png>]
-<figures/breast_umap_leiden.png, id=126, 426.68208pt x 296.88516pt>
+<figures/breast_umap_leiden.png, id=135, 426.68208pt x 296.88516pt>
 File: figures/breast_umap_leiden.png Graphic file (type png)
 <use figures/breast_umap_leiden.png>
-Package pdftex.def Info: figures/breast_umap_leiden.png  used on input line 129.
+Package pdftex.def Info: figures/breast_umap_leiden.png  used on input line 139.
 (pdftex.def)             Requested size: 281.85587pt x 196.126pt.
- [6
+ [7
 pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.133 
+l.143 
        <./figures/breast_radius_graph_spots_only.png>]
-<figures/breast_spatial_leiden_lowres_cropped.png, id=132, 331.57475pt x 310.761pt>
+<figures/breast_spatial_leiden_lowres_cropped.png, id=142, 331.57475pt x 310.761pt>
 File: figures/breast_spatial_leiden_lowres_cropped.png Graphic file (type png)
 <use figures/breast_spatial_leiden_lowres_cropped.png>
-Package pdftex.def Info: figures/breast_spatial_leiden_lowres_cropped.png  used on input line 136.
+Package pdftex.def Info: figures/breast_spatial_leiden_lowres_cropped.png  used on input line 146.
 (pdftex.def)             Requested size: 375.80544pt x 352.22275pt.
- [7
+ [8
 pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.141 \end{document}
+l.151 \end{document}
                     
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.141 \end{document}
+l.151 \end{document}
                      <./figures/breast_umap_leiden.png> <./figures/breast_spatial_leiden_lowres_cropped.png>] (./manuscript.aux)
  ***********
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-09>
  ***********
 Package rerunfilecheck Info: File `manuscript.out' has not changed.
-(rerunfilecheck)             Checksum: 7F340F8C01575DB647F9E79F1B3A77F7;2446.
+(rerunfilecheck)             Checksum: 623B021E0AE7E93E8CB1429AE48D6FA0;2652.
  ) 
 Here is how much of TeX's memory you used:
- 8702 strings out of 476227
- 138970 string characters out of 5795097
+ 8711 strings out of 476227
+ 139113 string characters out of 5795097
  1934558 words of memory out of 5000000
- 30549 multiletter control sequences out of 15000+600000
- 563408 words of font info for 54 fonts, out of 8000000 for 9000
+ 30555 multiletter control sequences out of 15000+600000
+ 563749 words of font info for 55 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,7n,79p,719b,586s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on manuscript.pdf (7 pages, 3644186 bytes).
+ 75i,7n,79p,719b,438s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1095.600pk><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/uzanv/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on manuscript.pdf (8 pages, 3646225 bytes).
 PDF statistics:
- 185 PDF objects out of 1000 (max. 8388607)
- 148 compressed objects within 2 object streams
- 32 named destinations out of 1000 (max. 500000)
- 178 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 198 PDF objects out of 1000 (max. 8388607)
+ 159 compressed objects within 2 object streams
+ 34 named destinations out of 1000 (max. 500000)
+ 186 words of extra memory for PDF output out of 10000 (max. 10000000)
 

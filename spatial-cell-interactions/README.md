@@ -152,6 +152,15 @@ python spatial-cell-interactions/scripts/10_plot_supervised_interactions.py \
 ```
 Generates `results/figures_supervised/` (top-K edge maps, ROC/PR, LR score vs prob).
 
+### SSL vs PCA ablation (test split)
+| Task | Features | Metric(s) |
+| --- | --- | --- |
+| LR edge (binary) | SSL embeddings | AUROC 0.977, AP 0.920 |
+| LR edge (binary) | PCA (expression) | AUROC 0.997, AP 0.987 |
+| Immune–epithelial (regression) | SSL embeddings | Spearman 0.893, top-k overlap 0.778 |
+| Immune–epithelial (regression) | PCA (expression) | Spearman 0.917, top-k overlap 0.824 |
+PCA baseline matches/exceeds SSL on these proxy labels; improving SSL utility is future work. Binary immune–epithelial is highly imbalanced (~95% positives) and secondary; type_pair is exploratory.
+
 ## Notes / limitations
 - The SSL objective measures link prediction / edge reconstruction (AUROC/AP) on the spatial graph; it is not a direct biological interaction ground truth.
 - Some Visium HD “tiny” developer datasets are intentionally corner-cropped/edited and can produce misleading image-backed plots; the CytAssist breast dataset is recommended for clean figures.

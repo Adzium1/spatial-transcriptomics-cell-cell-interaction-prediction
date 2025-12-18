@@ -11,6 +11,10 @@
 - breast_umap_leiden.png
 - breast_spatial_leiden_lowres_cropped.png
 
+## Supervised interaction metrics (test)
+- LR (SSL features): AUROC 0.9769809411367852, AP 0.9202200856705721
+- Immune–epithelial regression: Spearman 0.8929744092622207, top-k overlap 0.778
+
 ## Reproducibility (CPU)
 ```bash
 mkdir -p data/external/breast_cytassist_ffpe/outs
