@@ -113,9 +113,44 @@ Use the figure scripts (e.g., `07_make_pretty_spatial_figures.py`) or rely on th
 - `reports/preprint_breast_ssl/`
   - `manuscript.tex`, `manuscript.pdf`, `manuscript.md`
   - `figures/` (copied demo images)
-  - `references.bib`
-  - `build_preprint.py` (assembles report; runs `pdflatex` if available)
+ - `references.bib`
+ - `build_preprint.py` (assembles report; runs `pdflatex` if available)
   - `README.md` (rebuild instructions)
+
+## Supervised interaction modeling (LR + cell-type proxies)
+Labels and training are proxy tasks (expression/marker based), not ground-truth biology.
+
+1) Build labels (LR + cell-type edges):
+```bash
+python spatial-cell-interactions/scripts/08_build_interaction_labels.py \
+  --h5ad data/processed/breast_cytassist_ffpe.h5ad \
+  --graph data/processed/breast_cytassist_ffpe_radius_graph.pt
+```
+Outputs to `data/processed/supervised_labels/`:
+- `lr_edge_labels.parquet` (edge_id, src, dst, lr_score, y_lr, split)
+- `celltype_node_labels.parquet` (obs_name, cell_type, per-type scores)
+- `celltype_edge_labels_binary.parquet` (immune↔epithelial binary)
+- `celltype_edge_labels_multiclass.parquet` (directed type pairs; rare classes → Other)
+
+2) Train supervised edge classifiers (uses SSL embeddings if available, falls back to PCA):
+```bash
+python spatial-cell-interactions/scripts/09_train_supervised_edges.py \
+  --h5ad data/processed/breast_cytassist_ffpe.h5ad \
+  --graph data/processed/breast_cytassist_ffpe_radius_graph.pt \
+  --labels_dir data/processed/supervised_labels \
+  --out_dir results/run_breast_supervised \
+  --device cpu
+```
+Outputs: `preds_lr.parquet`, `preds_immune_epi.parquet`, optional `preds_type_pair.parquet`, plus `metrics.json`.
+
+3) Plot supervised predictions:
+```bash
+python spatial-cell-interactions/scripts/10_plot_supervised_interactions.py \
+  --h5ad data/processed/breast_cytassist_ffpe.h5ad \
+  --preds_lr results/run_breast_supervised/preds_lr.parquet \
+  --preds_immune_epi results/run_breast_supervised/preds_immune_epi.parquet
+```
+Generates `results/figures_supervised/` (top-K edge maps, ROC/PR, LR score vs prob).
 
 ## Notes / limitations
 - The SSL objective measures link prediction / edge reconstruction (AUROC/AP) on the spatial graph; it is not a direct biological interaction ground truth.

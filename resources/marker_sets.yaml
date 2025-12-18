@@ -1,0 +1,69 @@
+T_cells:
+  - CD3D
+  - CD3E
+  - TRAC
+  - TRBC1
+  - TRBC2
+  - LCK
+  - IL7R
+  - CXCR3
+  - GZMB
+  - NKG7
+
+B_cells:
+  - MS4A1
+  - CD79A
+  - CD79B
+  - CD74
+  - HLA-DRA
+  - CD37
+  - CD19
+  - MZB1
+  - JCHAIN
+
+Myeloid:
+  - LST1
+  - TYROBP
+  - FCER1G
+  - LILRB1
+  - LILRB2
+  - S100A8
+  - S100A9
+  - LGALS3
+  - CSF1R
+  - C1QA
+  - C1QB
+  - C1QC
+
+Endothelial:
+  - PECAM1
+  - VWF
+  - KDR
+  - EMCN
+  - FLT1
+  - RAMP2
+  - PLVAP
+  - ESAM
+
+Fibroblast:
+  - COL1A1
+  - COL1A2
+  - DCN
+  - LUM
+  - COL3A1
+  - TAGLN
+  - ACTA2
+  - PDGFRB
+  - PDGFRA
+  - FAP
+  - CXCL12
+
+Epithelial:
+  - EPCAM
+  - KRT8
+  - KRT18
+  - KRT19
+  - KRT7
+  - MSLN
+  - TACSTD2
+  - MUC1
