@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 import torch
+from torch.serialization import add_safe_globals
 
 import sys
 
@@ -56,7 +57,18 @@ def main() -> None:
     ensure_dir(args.out_dir)
     save_yaml(cfg_yaml, args.out_dir / "config_used.yaml")
 
-    graph = torch.load(args.graph)
+    try:
+        from torch_geometric.data import Data
+        try:
+            from torch_geometric.data import DataEdgeAttr  # PyG >=2.5
+            add_safe_globals([Data, DataEdgeAttr])
+        except ImportError:
+            add_safe_globals([Data])
+        # Graphs are saved as PyG Data with edge_index/edge_attr/pos/x/etc.; allowlist PyG classes for torch.load.
+        graph = torch.load(args.graph, weights_only=False, map_location=args.device or "cpu")
+    except Exception:
+        # Fallback without safe globals (trusted local file)
+        graph = torch.load(args.graph, weights_only=False, map_location=args.device or "cpu")
     metrics = train_ssl(graph, train_cfg, args.out_dir)
     logger.info("Training complete. Metrics: %s", metrics)
 

@@ -1,2 +1,11 @@
-# Ignore large raw dataset artifacts
-data/external/Visium_HD_Tiny_3prime_Dataset_outs/
+# Ignore raw/processed data and heavyweight artifacts
+data/
+results/
+spatial-transcriptomics-cell-cell-interaction-prediction/
+spatial-cell-interactions/data/
+spatial-cell-interactions/results/
+*.tar.gz
+*.zip
+*.h5
+*.h5ad
+*.pt
